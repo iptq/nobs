@@ -1,12 +1,11 @@
 use actix_web::{error, Error, HttpRequest, HttpResponse, State};
-use tera::Context;
 
 use AppState;
 
 pub fn repo_index((req, state): (HttpRequest<AppState>, State<AppState>)) -> Result<HttpResponse, Error> {
     let params = req.match_info();
     let repo_name = params.get("repo").unwrap();
-    let mut ctx = Context::new();
+    let mut ctx = state.generate_context();
     ctx.add("title", repo_name);
     let s = state
         .templates

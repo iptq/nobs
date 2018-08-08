@@ -1,10 +1,9 @@
 use actix_web::{error, Error, HttpResponse, State};
-use tera::Context;
 
 use AppState;
 
 pub fn host_index(state: State<AppState>) -> Result<HttpResponse, Error> {
-    let mut ctx = Context::new();
+    let mut ctx = state.generate_context();
     ctx.add("title", "Host Index");
     ctx.add(
         "repositories",

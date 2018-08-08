@@ -17,7 +17,7 @@ use std::sync::{Arc, Mutex};
 
 use actix_web::{fs, http::Method, App};
 use failure::Error;
-use tera::Tera;
+use tera::{Tera,Context};
 
 pub use config::Config;
 
@@ -32,8 +32,19 @@ pub struct RepoInfo {
 
 #[derive(Clone)]
 pub struct AppState {
+    config: Config,
     pub templates: Arc<Tera>,
     pub repositories: Arc<Mutex<HashMap<String, RepoInfo>>>,
+}
+
+impl AppState {
+    fn generate_context(&self) -> Context {
+        let mut ctx = Context::new();
+        ctx.add("site", &json!({
+            "title": self.config.title,
+        }));
+                ctx
+    }
 }
 
 impl From<Config> for Nobs {
@@ -44,6 +55,7 @@ impl From<Config> for Nobs {
         )));
         let repositories = Arc::new(Mutex::new(HashMap::new()));
         let state = AppState {
+            config: config.clone(),
             templates,
             repositories,
         };

@@ -1,0 +1,20 @@
+{% extends "layout.html" %}
+
+{% block content %}
+    <div class="RepoList">
+        <div class="RepoList-item RepoList-item--header">
+            <span class="RepoList-itemName">
+                Name
+            </span>
+            <span class="RepoList-itemDescription">
+                Description
+            </span>
+        </div>
+        {% for repo in repositories %}
+            <a class="RepoList-item" href="/{{ repo.name }}">
+                <span class="RepoList-itemName">{{ repo.name }}</span>
+                <span class="RepoList-itemDescription">nope</span>
+            </a>
+        {% endfor %}
+    </div>
+{% endblock %}

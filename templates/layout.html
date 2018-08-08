@@ -2,6 +2,8 @@
 <html lang="en">
 	<head>
 		<link rel="stylesheet" type="text/css" href="/+static/base.css" />
+		<link rel="stylesheet" type="text/css" href="/+static/doc.css" />
+        <title>{% if title %}{{ title }} - {% endif %}NOBS</title>
 	</head>
 	<body class="Site">
 		<header class="Site-header">
@@ -10,6 +12,9 @@
 		</header>
 
 		<div class="Site-content">
+            <div class="Container">
+                {% block content %}{% endblock content %}
+            </div>
 		</div>
 
 		<footer class="Site-footer">

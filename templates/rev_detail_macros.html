@@ -12,14 +12,14 @@
                 </td>
             </tr>
             <tr>
-            <th class="Metadata-title">{msg desc="Header for commit author"}author{/msg}</th>
-            <td>{call .person_ data="$author" /}</td>
-            <td>{$author.time}</td>
+                <th class="Metadata-title">author</th>
+                <td>{{ commit.author }}</td>
+                <td>time</td>
             </tr>
             <tr>
-            <th class="Metadata-title">{msg desc="Header for committer"}committer{/msg}</th>
-            <td>{call .person_ data="$committer" /}</td>
-            <td>{$committer.time}</td>
+                <th class="Metadata-title">committer</th>
+                <td>{{ commit.committer }}</td>
+                <td>{$committer.time}</td>
             </tr>
             <tr>
             <th class="Metadata-title">{msg desc="Header for tree SHA entry"}tree{/msg}</th>

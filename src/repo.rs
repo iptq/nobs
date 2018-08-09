@@ -3,7 +3,7 @@ use std::io::Read;
 use std::path::PathBuf;
 
 use failure::{err_msg, Error};
-use git2::{Branch, BranchType, ObjectType, Repository};
+use git2::{Branch, BranchType, Object, ObjectType, Repository};
 use serde::ser::{self, Serialize, SerializeStruct, Serializer};
 
 #[derive(Clone)]
@@ -20,9 +20,16 @@ pub struct RepoDetails {
 }
 
 #[derive(Clone)]
+pub struct RevDetails {
+    kind: String,
+    commit: Option<CommitDetails>,
+}
+
+#[derive(Clone)]
 pub struct CommitDetails {
     pub hash: String,
     pub short_id: String,
+    pub committer: String,
     pub author: String,
     pub summary: String,
 }
@@ -66,16 +73,7 @@ impl RepoInfo {
             })
             .take(5)
             .try_fold(Vec::new(), |mut it, object| -> Result<_, Error> {
-                let commit = object.peel_to_commit()?;
-                it.push(CommitDetails {
-                    hash: format!("{}", commit.id()),
-                    short_id: object
-                        .short_id()
-                        .map(|g| g.as_str().unwrap_or("").to_owned())
-                        .unwrap_or("".to_owned()),
-                    author: commit.author().name().unwrap_or("").to_owned(),
-                    summary: commit.summary().unwrap_or("").to_owned(),
-                });
+                it.push(CommitDetails::from(&object)?);
                 Ok(it)
             })?;
         let branches = repo
@@ -93,6 +91,42 @@ impl RepoInfo {
             branches,
             description,
             commits,
+        })
+    }
+}
+
+impl RevDetails {
+    pub fn from(object: &Object) -> Result<Self, Error> {
+        let mut commit = None;
+        let kind = match object.kind() {
+            Some(ObjectType::Any) => "any",
+            Some(ObjectType::Commit) => {
+                commit = CommitDetails::from(&object).ok();
+                "commit"
+            }
+            Some(ObjectType::Tree) => "tree",
+            Some(ObjectType::Blob) => "blob",
+            Some(ObjectType::Tag) => "tag",
+            None => "unknown",
+        }.to_owned();
+        Ok(RevDetails { kind, commit })
+    }
+}
+
+impl CommitDetails {
+    pub fn from(object: &Object) -> Result<Self, Error> {
+        let commit = object.peel_to_commit()?;
+        let author = commit.author();
+        let committer = commit.committer();
+        Ok(CommitDetails {
+            hash: format!("{}", commit.id()),
+            short_id: object
+                .short_id()
+                .map(|g| g.as_str().unwrap_or("").to_owned())
+                .unwrap_or("".to_owned()),
+            author: author.name().unwrap_or("").to_owned(),
+            committer: committer.name().unwrap_or("").to_owned(),
+            summary: commit.summary().unwrap_or("").to_owned(),
         })
     }
 }
@@ -133,15 +167,30 @@ impl Serialize for RepoDetails {
     }
 }
 
+impl Serialize for RevDetails {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut state = serializer.serialize_struct("RevDetails", 1)?;
+        state.serialize_field("kind", &self.kind)?;
+        if let Some(ref value) = self.commit {
+            state.serialize_field("commit", value)?;
+        }
+        state.end()
+    }
+}
+
 impl Serialize for CommitDetails {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
     {
-        let mut state = serializer.serialize_struct("CommitDetails", 4)?;
+        let mut state = serializer.serialize_struct("CommitDetails", 5)?;
         state.serialize_field("hash", &self.hash)?;
         state.serialize_field("short_id", &self.short_id)?;
         state.serialize_field("author", &self.author)?;
+        state.serialize_field("committer", &self.committer)?;
         state.serialize_field("summary", &self.summary)?;
         state.end()
     }

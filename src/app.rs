@@ -1,8 +1,8 @@
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
-use actix_web::{fs, http::Method, App};
-use failure::Error;
+use actix_web::{fs, http::Method, App, Error as actix_error};
+use failure::{err_msg, Error};
 use git2::Repository;
 use glob::glob;
 
@@ -15,8 +15,8 @@ pub struct Nobs {
     state: AppState,
 }
 
-impl From<Config> for Nobs {
-    fn from(config: Config) -> Self {
+impl Nobs {
+    pub fn from(config: Config) -> Result<Self, Error> {
         let templates = Arc::new(compile_templates!(concat!(
             env!("CARGO_MANIFEST_DIR"),
             "/templates/**/*"
@@ -29,38 +29,64 @@ impl From<Config> for Nobs {
         };
 
         let mut app = Nobs { state };
+        let mut failed = Vec::new();
         for source in config.sources {
-            app.add_source(&source);
+            match app.add_source(&source) {
+                Ok(_) => (),
+                Err(err) => failed.push(format!("{:?}: {}", source, err)),
+            }
         }
-        app
+        if failed.len() > 1 {
+            bail!("Failed to add sources: \n{}", failed.join("\n"))
+        }
+        Ok(app)
     }
 }
 
 impl Nobs {
-    fn add_source(&mut self, pattern: &str) {
+    fn add_source(&mut self, pattern: &str) -> Result<(), Error> {
+        let mut failed = Vec::new();
         for entry in glob(pattern).expect("Bad glob pattern") {
-            match entry {
-                Ok(path) => {
-                    let path = path.canonicalize().unwrap_or(path);
-                    let name = path.file_stem().unwrap().to_str().unwrap().to_owned();
+            let result: Result<_, Error> = match &entry {
+                Ok(ref path) => {
+                    let path = path.canonicalize().unwrap_or(path.clone());
+                    let name = path
+                        .file_stem()
+                        .ok_or(err_msg(format!("File '{:?}' does not have a name.", path)))?
+                        .to_str()
+                        .ok_or(err_msg(format!(
+                            "Could not convert OsStr to str for '{:?}'.",
+                            path
+                        )))?
+                        .to_owned();
 
-                    // TODO: don't unwrap
-                    let _ = Repository::open(&path).unwrap();
-
+                    let _ = Repository::open(&path)?;
                     let info = RepoInfo {
                         name: name.clone(),
                         path,
                     };
-                    self.state.repositories.lock().unwrap().insert(name, info);
+                    match self.state.repositories.lock() {
+                        Ok(mut repositories) => repositories.insert(name, info),
+                        _ => bail!("Could not acquire lock on repositories."),
+                    };
+                    Ok(())
                 }
-                Err(_) => (),
+                Err(err) => bail!("Glob failure: {}", err),
+            };
+            match result {
+                Ok(_) => (),
+                Err(err) => failed.push(format!("{:?}: {}", entry, err)),
             }
         }
+        if failed.len() > 1 {
+            bail!("Failed to add sources: \n{}", failed.join("\n"))
+        }
+        Ok(())
     }
 
-    pub fn build_app(&self) -> Result<App<AppState>, Error> {
+    pub fn build_app(&self) -> Result<App<AppState>, actix_error> {
         Ok(App::with_state(self.state.clone())
-            .handler("/+static", fs::StaticFiles::new("static").unwrap())
+            .handler("/+static", fs::StaticFiles::new("static")?)
             .resource("/", |r| r.method(Method::GET).with(views::host_index))
             .resource("/{repo}", |r| r.method(Method::GET).with(views::repo_index)))
     }

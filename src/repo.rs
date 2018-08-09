@@ -2,8 +2,9 @@ use std::fs::File;
 use std::io::Read;
 use std::path::PathBuf;
 
-use git2::{BranchType, Repository};
-use serde::ser::{Serialize, SerializeStruct, Serializer};
+use failure::{err_msg, Error};
+use git2::{Branch, BranchType, Repository};
+use serde::ser::{self, Serialize, SerializeStruct, Serializer};
 
 #[derive(Clone)]
 pub struct RepoInfo {
@@ -26,48 +27,64 @@ pub struct CommitDetails {
 }
 
 impl RepoInfo {
-    pub fn get_details(&self) -> RepoDetails {
-        let repo = Repository::open(&self.path).unwrap();
+    pub fn get_details(&self) -> Result<RepoDetails, Error> {
+        let repo = Repository::open(&self.path)?;
+        // get description
         let description_file = {
             let mut path = repo.path().to_path_buf().clone();
             path.push("description");
             path
         };
         let mut description = String::new();
-        let mut file = File::open(&description_file).unwrap();
-        file.read_to_string(&mut description).unwrap();
+        let mut file = File::open(&description_file)?;
+        file.read_to_string(&mut description)?;
 
-        let mut revwalk = repo.revwalk().unwrap();
-        let mut branches = repo.branches(None).unwrap();
-        let branch = repo.find_branch("master", BranchType::Local).unwrap_or_else(|_| {
-                branches.next().unwrap().unwrap().0
-            });
-        let commit = branch.get().peel_to_commit().unwrap();
-        revwalk.push(commit.id()).unwrap();
+        // get branches and commits
+        let mut revwalk = repo.revwalk()?;
+        let mut branches = repo.branches(None)?;
+        let branch: Branch = repo.find_branch("master", BranchType::Local).or_else(
+            |_| -> Result<_, Error> {
+                Ok(branches
+                    .next()
+                    .ok_or(err_msg("No branches exist in this repo."))??
+                    .0)
+            },
+        )?;
+        let commit = branch.get().peel_to_commit()?;
+        revwalk.push(commit.id())?;
         let commits = revwalk
             .take(5)
             .filter_map(|oid| match oid {
-                Ok(oid) => Some(repo.find_commit(oid).unwrap()),
+                Ok(oid) => match repo.find_commit(oid) {
+                    Ok(value) => Some(value),
+                    Err(_) => None,
+                },
                 _ => None,
             })
-            .map(|commit| CommitDetails {
-                hash: format!("{}", commit.id()),
-                author: commit.author().name().unwrap().to_owned(),
-                summary: commit.summary().unwrap().to_owned(),
+            .try_fold(Vec::new(), |mut it, commit| -> Result<_, Error> {
+                it.push(CommitDetails {
+                    hash: format!("{}", commit.id()),
+                    author: commit.author().name().unwrap_or("").to_owned(),
+                    summary: commit.summary().unwrap_or("").to_owned(),
+                });
+                Ok(it)
+            })?;
+        let branches = repo
+            .branches(None)?
+            .map(|branch| -> Result<_, Error> {
+                let (branch, branch_type) = branch?;
+                match branch_type {
+                    BranchType::Local => Ok(branch.name()?.ok_or(err_msg("Not UTF-8"))?.to_owned()),
+                    _ => Err(err_msg("Not a local branch.")),
+                }
             })
+            .filter_map(Result::ok)
             .collect::<Vec<_>>();
-        let branches = repo.branches(None).unwrap().filter_map(|branch| {
-            let (branch, branch_type) = branch.unwrap();
-            match branch_type {
-                BranchType::Local =>Some( branch.name().unwrap().unwrap().to_owned()),
-                _ => None
-            }
-        }).collect::<Vec<_>>();
-        RepoDetails {
+        Ok(RepoDetails {
             branches,
             description,
             commits,
-        }
+        })
     }
 }
 
@@ -76,7 +93,15 @@ impl Serialize for RepoInfo {
     where
         S: Serializer,
     {
-        let details = self.get_details();
+        let details = match self.get_details() {
+            Ok(details) => details,
+            Err(err) => {
+                return Err(ser::Error::custom(format!(
+                    "Failed to retrieve details: {}",
+                    err
+                )))
+            }
+        };
 
         let mut state = serializer.serialize_struct("Repository", 3)?;
         state.serialize_field("name", &self.name)?;

@@ -1,5 +1,6 @@
 extern crate actix_web;
 extern crate config as _config;
+#[macro_use]
 extern crate failure;
 extern crate git2;
 extern crate glob;

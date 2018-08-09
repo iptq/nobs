@@ -17,8 +17,8 @@ fn main() -> Result<(), Error> {
     cfg.merge(config::File::with_name("nobs"))?;
 
     let appcfg = Config::from_cfg(&cfg)?;
+    let app = Arc::new(Nobs::from(appcfg.clone())?);
 
-    let app = Arc::new(Nobs::from(appcfg.clone()));
     server::new(move || app.build_app())
         .bind((appcfg.host.as_ref(), appcfg.port))?
         .run();

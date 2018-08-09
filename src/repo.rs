@@ -13,6 +13,7 @@ pub struct RepoInfo {
 
 #[derive(Clone)]
 pub struct RepoDetails {
+    pub branches: Vec<String>,
     pub description: String,
     pub commits: Vec<CommitDetails>,
 }
@@ -20,6 +21,7 @@ pub struct RepoDetails {
 #[derive(Clone)]
 pub struct CommitDetails {
     pub hash: String,
+    pub author: String,
     pub summary: String,
 }
 
@@ -34,11 +36,11 @@ impl RepoInfo {
         let mut description = String::new();
         let mut file = File::open(&description_file).unwrap();
         file.read_to_string(&mut description).unwrap();
-        println!("{:?}", repo.revwalk().unwrap().collect::<Vec<_>>());
 
         let mut revwalk = repo.revwalk().unwrap();
+        let mut branches = repo.branches(None).unwrap();
         let branch = repo.find_branch("master", BranchType::Local).unwrap_or_else(|_| {
-                repo.branches(None).unwrap().next().unwrap().unwrap().0
+                branches.next().unwrap().unwrap().0
             });
         let commit = branch.get().peel_to_commit().unwrap();
         revwalk.push(commit.id()).unwrap();
@@ -50,10 +52,19 @@ impl RepoInfo {
             })
             .map(|commit| CommitDetails {
                 hash: format!("{}", commit.id()),
+                author: commit.author().name().unwrap().to_owned(),
                 summary: commit.summary().unwrap().to_owned(),
             })
             .collect::<Vec<_>>();
+        let branches = repo.branches(None).unwrap().filter_map(|branch| {
+            let (branch, branch_type) = branch.unwrap();
+            match branch_type {
+                BranchType::Local =>Some( branch.name().unwrap().unwrap().to_owned()),
+                _ => None
+            }
+        }).collect::<Vec<_>>();
         RepoDetails {
+            branches,
             description,
             commits,
         }
@@ -80,7 +91,8 @@ impl Serialize for RepoDetails {
     where
         S: Serializer,
     {
-        let mut state = serializer.serialize_struct("RepoDetails", 2)?;
+        let mut state = serializer.serialize_struct("RepoDetails", 3)?;
+        state.serialize_field("branches", &self.branches)?;
         state.serialize_field("description", &self.description)?;
         state.serialize_field("commits", &self.commits)?;
         state.end()
@@ -94,6 +106,7 @@ impl Serialize for CommitDetails {
     {
         let mut state = serializer.serialize_struct("CommitDetails", 2)?;
         state.serialize_field("hash", &self.hash)?;
+        state.serialize_field("author", &self.author)?;
         state.serialize_field("summary", &self.summary)?;
         state.end()
     }

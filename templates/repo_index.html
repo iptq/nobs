@@ -12,13 +12,22 @@
 
     <div class="RepoShortlog">
 		<div class="RepoShortlog-refs">
+			<div class="RefList">
+				<h3 class="RefList-title">Branches</h3>
+				<ul class="RefList-items">
+					{% for branch in details.branches %}
+						<li class="RefList-item"><a href="/{{ repo.name }}/+/{{ branch }}">{{ branch }}</a></li>
+					{% endfor %}
+				</ul>
+			</div>
 		</div>
 		<div class="RepoShortlog-log">
 			<ol class="CommitLog">
 				{% for commit in details.commits %}
 					<li class="CommitLog-item CommitLog-item--oneline">
-						<a class="u-sha1 u-monospace CommitLog-sha1" href="">{{ commit.hash | truncate(length=7, end="") }}</a>
-						<a href="">{{ commit.summary }}</a>
+						<a class="u-sha1 u-monospace CommitLog-sha1" href="/{{ repo.name }}/+/{{ commit.hash }}">{{ commit.hash | truncate(length=7, end="") }}</a>
+						<a href="/{{ repo.name }}/+/{{ commit.hash }}">{{ commit.summary }}</a>
+						by {{ commit.author }}
 					</li>
 				{% endfor %}
 			</ol>

@@ -5,17 +5,17 @@ use AppState;
 pub fn host_index(
     (req, state): (HttpRequest<AppState>, State<AppState>),
 ) -> Result<HttpResponse, Error> {
+    let repositories = match state.repositories.lock() {
+        Ok(repositories) => repositories
+            .values()
+            .map(|value| value.clone())
+            .collect::<Vec<_>>(),
+        _ => return Err(error::ErrorBadRequest("Did not specify a repository.")),
+    };
+
     let mut ctx = state.generate_context(&req);
     ctx.add("title", "Host Index");
-    ctx.add(
-        "repositories",
-        &state
-            .repositories
-            .lock()
-            .unwrap()
-            .values()
-            .collect::<Vec<_>>(),
-    );
+    ctx.add("repositories", &repositories);
 
     let s = state
         .templates

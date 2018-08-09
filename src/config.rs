@@ -16,11 +16,13 @@ impl Config {
         let port = cfg.get_int("port")? as u16;
         let title = cfg.get_str("title")?;
         let recursive = cfg.get_bool("recursive")?;
-        let sources = cfg
-            .get_array("sources")?
-            .iter()
-            .map(|value| value.clone().into_str().unwrap())
-            .collect::<Vec<_>>();
+        let sources = cfg.get_array("sources")?.iter().try_fold(
+            Vec::new(),
+            |mut it, value| -> Result<_, Error> {
+                it.push(value.clone().into_str()?);
+                Ok(it)
+            },
+        )?;
         Ok(Config {
             host,
             port,

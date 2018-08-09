@@ -34,7 +34,6 @@ pub struct Nobs {
 pub struct RepoInfo {
     pub name: String,
     pub path: PathBuf,
-    pub description: String,
 }
 
 #[derive(Clone)]
@@ -73,6 +72,20 @@ impl AppState {
     }
 }
 
+impl RepoInfo {
+    fn get_description(&self) -> String {
+        let description_file = {
+            let mut path = self.path.clone();
+            path.push("description");
+            path
+        };
+        let mut description = String::new();
+        let mut file = File::open(&description_file).unwrap();
+        file.read_to_string(&mut description).unwrap();
+        description
+    }
+}
+
 impl Serialize for RepoInfo {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
@@ -81,7 +94,7 @@ impl Serialize for RepoInfo {
         let mut state = serializer.serialize_struct("Repository", 3)?;
         state.serialize_field("name", &self.name)?;
         state.serialize_field("path", &self.path)?;
-        state.serialize_field("description", &self.description)?;
+        state.serialize_field("description", &self.get_description())?;
         state.end()
     }
 }
@@ -117,20 +130,10 @@ impl Nobs {
 
                     // TODO: don't unwrap
                     let _ = Repository::open(&path).unwrap();
-                    let description_file = {
-                        let mut path = path.clone();
-                        path.push("description");
-                        path
-                    };
-                    let mut description = String::new();
-                    let mut file = File::open(&description_file).unwrap();
-                    file.read_to_string(&mut description).unwrap();
-                    description.trim();
 
                     let info = RepoInfo {
                         name: name.clone(),
                         path,
-                        description,
                     };
                     self.state.repositories.lock().unwrap().insert(name, info);
                 }

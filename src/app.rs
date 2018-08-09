@@ -88,6 +88,9 @@ impl Nobs {
         Ok(App::with_state(self.state.clone())
             .handler("/+static", fs::StaticFiles::new("static")?)
             .resource("/", |r| r.method(Method::GET).with(views::host_index))
+            .resource("/{repo}/+/{rev}", |r| {
+                r.method(Method::GET).with(views::rev_detail)
+            })
             .resource("/{repo}", |r| r.method(Method::GET).with(views::repo_index)))
     }
 }

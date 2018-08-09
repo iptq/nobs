@@ -29,6 +29,9 @@ pub struct CommitDetails {
 impl RepoInfo {
     pub fn get_details(&self) -> Result<RepoDetails, Error> {
         let repo = Repository::open(&self.path)?;
+        RepoInfo::get_details_from_repository(&repo)
+    }
+    pub fn get_details_from_repository(repo: &Repository) -> Result<RepoDetails, Error> {
         // get description
         let description_file = {
             let mut path = repo.path().to_path_buf().clone();

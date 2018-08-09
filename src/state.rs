@@ -20,11 +20,21 @@ impl AppState {
         let parts = path.split("/").collect::<Vec<_>>();
 
         let mut result = Vec::new();
+        let repo;
         result.push(json!({ "text": "nobs", "url": "/" }));
         match parts.get(1) {
             Some(&"") | None => return Ok(result),
             Some(value) => {
+                repo = String::from(*value);
                 result.push(json!({ "text": String::from(*value), "url": format!("/{}", value) }))
+            }
+        };
+        match parts.get(3) {
+            Some(&"") | None => return Ok(result),
+            Some(value) => {
+                result.push(
+                    json!({ "text": String::from(*value), "url": format!("/{}/+/{}", repo, value) }),
+                );
             }
         };
         Ok(result)

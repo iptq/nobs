@@ -25,7 +25,7 @@
 			<ol class="CommitLog">
 				{% for commit in details.commits %}
 					<li class="CommitLog-item CommitLog-item--oneline">
-						<a class="u-sha1 u-monospace CommitLog-sha1" href="/{{ repo.name }}/+/{{ commit.hash }}">{{ commit.hash | truncate(length=7, end="") }}</a>
+						<a class="u-sha1 u-monospace CommitLog-sha1" href="/{{ repo.name }}/+/{{ commit.hash }}">{{ commit.short_id }}</a>
 						<a href="/{{ repo.name }}/+/{{ commit.hash }}">{{ commit.summary }}</a>
 						by {{ commit.author }}
 					</li>

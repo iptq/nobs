@@ -1,7 +1,7 @@
 use actix_web::{error, Error, HttpRequest, HttpResponse, State};
 
-use AppState;
 use middleware::RepoFull;
+use AppState;
 
 pub fn repo_index(
     (req, repo, state): (HttpRequest<AppState>, RepoFull, State<AppState>),

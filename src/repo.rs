@@ -3,7 +3,7 @@ use std::io::Read;
 use std::path::PathBuf;
 
 use failure::{err_msg, Error};
-use git2::{Branch, BranchType, Repository};
+use git2::{Branch, BranchType, ObjectType, Repository};
 use serde::ser::{self, Serialize, SerializeStruct, Serializer};
 
 #[derive(Clone)]
@@ -22,6 +22,7 @@ pub struct RepoDetails {
 #[derive(Clone)]
 pub struct CommitDetails {
     pub hash: String,
+    pub short_id: String,
     pub author: String,
     pub summary: String,
 }
@@ -56,17 +57,22 @@ impl RepoInfo {
         let commit = branch.get().peel_to_commit()?;
         revwalk.push(commit.id())?;
         let commits = revwalk
-            .take(5)
             .filter_map(|oid| match oid {
-                Ok(oid) => match repo.find_commit(oid) {
+                Ok(oid) => match repo.find_object(oid, Some(ObjectType::Commit)) {
                     Ok(value) => Some(value),
                     Err(_) => None,
                 },
                 _ => None,
             })
-            .try_fold(Vec::new(), |mut it, commit| -> Result<_, Error> {
+            .take(5)
+            .try_fold(Vec::new(), |mut it, object| -> Result<_, Error> {
+                let commit = object.peel_to_commit()?;
                 it.push(CommitDetails {
                     hash: format!("{}", commit.id()),
+                    short_id: object
+                        .short_id()
+                        .map(|g| g.as_str().unwrap_or("").to_owned())
+                        .unwrap_or("".to_owned()),
                     author: commit.author().name().unwrap_or("").to_owned(),
                     summary: commit.summary().unwrap_or("").to_owned(),
                 });
@@ -132,8 +138,9 @@ impl Serialize for CommitDetails {
     where
         S: Serializer,
     {
-        let mut state = serializer.serialize_struct("CommitDetails", 2)?;
+        let mut state = serializer.serialize_struct("CommitDetails", 4)?;
         state.serialize_field("hash", &self.hash)?;
+        state.serialize_field("short_id", &self.short_id)?;
         state.serialize_field("author", &self.author)?;
         state.serialize_field("summary", &self.summary)?;
         state.end()

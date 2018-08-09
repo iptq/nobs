@@ -11,6 +11,16 @@ pub fn rev_detail(
         Some(value) => value,
         None => return Err(error::ErrorBadRequest("Did not specify a rev.")),
     };
+    let rev = match repo.repo.revparse_single(rev_name) {
+        Ok(rev) => rev,
+        Err(err) => {
+            return Err(error::ErrorBadRequest(format!(
+                "Could not parse rev: {}",
+                err
+            )))
+        }
+    };
+    println!("rev: {:?}", rev);
 
     let mut ctx = state.generate_context(&req);
     ctx.add("title", &format!("{} - {}", rev_name, repo.info.name));

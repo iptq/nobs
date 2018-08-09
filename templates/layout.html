@@ -2,19 +2,40 @@
 <html lang="en">
 	<head>
 		<link rel="stylesheet" type="text/css" href="/+static/base.css" />
+		<link rel="stylesheet" type="text/css" href="/+static/doc.css" />
+        <title>{% if title %}{{ title }} - {% endif %}{{ site.title }}</title>
 	</head>
 	<body class="Site">
 		<header class="Site-header">
 			<div class="Header">
+                <div class="Header-title">
+                    <a href="/" style="color: black; text-decoration: none;">{{ site.title }}</a>
+                </div>
 			</div>
 		</header>
 
 		<div class="Site-content">
+            <div class="Container">
+                {% if breadcrumbs and breadcrumbs | length %}
+                    <div class="Breadcrumbs">
+                        {% for entry in breadcrumbs %}
+                            /
+                            {% if not loop.last %}
+                                <a class="Breadcrumbs-crumb" href="{{ entry.url }}">{{ entry.text }}</a>
+                            {% else %}
+                                <span class="Breadcrumbs-crumb">{{ entry.text }}</span>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                {% endif %}
+                {% block content %}{% endblock content %}
+            </div>
 		</div>
 
 		<footer class="Site-footer">
 			<div class="Footer">
 				<span class="Footer-poweredBy">
+                    Powered by <a href="https://nobs.mzhang.me/nobs" target="_blank">NOBS</a>.
 				</span>
 			</div>
 		</footer>

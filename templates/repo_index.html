@@ -1,0 +1,11 @@
+{% extends "layout.html" %}
+
+{% block content %}
+    <h2 class="RepoDescription">{{ repo.description }}</h2>
+    <div class="CloneRepo">
+    <div class="CloneRepo-title">Clone this repo:</div>
+        <input type="text" class="u-monospace CloneRepo-command"
+            onclick="this.focus();if(this.selectionStart==this.selectionEnd){this.select()}"
+            readonly="readonly" value="git clone lol">
+    </div>
+{% endblock %}

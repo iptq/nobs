@@ -1,5 +1,3 @@
-use std::path::PathBuf;
-
 use _config;
 use failure::Error;
 
@@ -7,14 +5,28 @@ use failure::Error;
 pub struct Config {
     pub host: String,
     pub port: u16,
-    pub base_path: PathBuf,
+    pub title: String,
+    pub recursive: bool,
+    pub sources: Vec<String>,
 }
 
 impl Config {
-	pub fn from_cfg(cfg: &_config::Config) -> Result<Self, Error> {
-		let host = cfg.get_str("host")?;
-		let port = cfg.get_int("port")? as u16;
-		let base_path = PathBuf::from(cfg.get_str("base_path")?);
-		Ok(Config { host, port, base_path })
-	}
+    pub fn from_cfg(cfg: &_config::Config) -> Result<Self, Error> {
+        let host = cfg.get_str("host")?;
+        let port = cfg.get_int("port")? as u16;
+        let title = cfg.get_str("title")?;
+        let recursive = cfg.get_bool("recursive")?;
+        let sources = cfg
+            .get_array("sources")?
+            .iter()
+            .map(|value| value.clone().into_str().unwrap())
+            .collect::<Vec<_>>();
+        Ok(Config {
+            host,
+            port,
+            title,
+            recursive,
+            sources,
+        })
+    }
 }

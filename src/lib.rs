@@ -5,10 +5,11 @@ extern crate failure;
 extern crate git2;
 extern crate glob;
 #[macro_use]
-extern crate tera;
-#[macro_use]
 extern crate serde_json;
 extern crate serde;
+#[macro_use]
+extern crate tera;
+extern crate tokei;
 
 mod app;
 mod config;

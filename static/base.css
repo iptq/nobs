@@ -216,13 +216,20 @@ ul, ol {
   background: #fff;
 }
 .RepoList-itemName,
+.RepoList-itemLanguage,
 .RepoList-itemDescription {
   display: inline-block;
 }
 .RepoList-itemName {
   margin-right: 10px;
-  min-width: 25%;
+  min-width: 20%;
   text-decoration: underline;
+}
+.RepoList-itemLanguage {
+  margin-right: 10px;
+  min-width: 10%;
+  color: #000;
+  text-decoration: none;
 }
 .RepoList-item--header > .RepoList-itemName {
   text-decoration: none;

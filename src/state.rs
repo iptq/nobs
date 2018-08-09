@@ -21,7 +21,7 @@ impl AppState {
 
         let mut result = Vec::new();
         let repo;
-        result.push(json!({ "text": "nobs", "url": "/" }));
+        result.push(json!({ "text": self.config.toplevel, "url": "/" }));
         match parts.get(1) {
             Some(&"") | None => return Ok(result),
             Some(value) => {

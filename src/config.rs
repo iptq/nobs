@@ -6,6 +6,7 @@ pub struct Config {
     pub host: String,
     pub port: u16,
     pub title: String,
+    pub toplevel:String,
     pub recursive: bool,
     pub sources: Vec<String>,
 }
@@ -15,6 +16,7 @@ impl Config {
         let host = cfg.get_str("host")?;
         let port = cfg.get_int("port")? as u16;
         let title = cfg.get_str("title")?;
+        let toplevel = cfg.get_str("toplevel")?;
         let recursive = cfg.get_bool("recursive")?;
         let sources = cfg.get_array("sources")?.iter().try_fold(
             Vec::new(),
@@ -27,6 +29,7 @@ impl Config {
             host,
             port,
             title,
+            toplevel,
             recursive,
             sources,
         })

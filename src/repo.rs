@@ -2,7 +2,7 @@ use std::fs::File;
 use std::io::Read;
 use std::path::PathBuf;
 
-use git2::{Branch,BranchType, Repository};
+use git2::{BranchType, Repository};
 use serde::ser::{Serialize, SerializeStruct, Serializer};
 
 #[derive(Clone)]
@@ -19,6 +19,7 @@ pub struct RepoDetails {
 
 #[derive(Clone)]
 pub struct CommitDetails {
+    pub hash: String,
     pub summary: String,
 }
 
@@ -48,6 +49,7 @@ impl RepoInfo {
                 _ => None,
             })
             .map(|commit| CommitDetails {
+                hash: format!("{}", commit.id()),
                 summary: commit.summary().unwrap().to_owned(),
             })
             .collect::<Vec<_>>();
@@ -90,7 +92,8 @@ impl Serialize for CommitDetails {
     where
         S: Serializer,
     {
-        let mut state = serializer.serialize_struct("CommitDetails", 1)?;
+        let mut state = serializer.serialize_struct("CommitDetails", 2)?;
+        state.serialize_field("hash", &self.hash)?;
         state.serialize_field("summary", &self.summary)?;
         state.end()
     }

@@ -17,7 +17,7 @@
 			<ol class="CommitLog">
 				{% for commit in details.commits %}
 					<li class="CommitLog-item CommitLog-item--oneline">
-						<a class="u-sha1 u-monospace CommitLog-sha1" href="">55a49f4</a>
+						<a class="u-sha1 u-monospace CommitLog-sha1" href="">{{ commit.hash | truncate(length=7, end="") }}</a>
 						<a href="">{{ commit.summary }}</a>
 					</li>
 				{% endfor %}

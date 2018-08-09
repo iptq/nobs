@@ -19,7 +19,7 @@
                 {% if breadcrumbs and breadcrumbs | length %}
                     <div class="Breadcrumbs">
                         {% for entry in breadcrumbs %}
-                            /
+                            {% if loop.first %} ~ {% else %} / {% endif %}
                             {% if not loop.last %}
                                 <a class="Breadcrumbs-crumb" href="{{ entry.url }}">{{ entry.text }}</a>
                             {% else %}

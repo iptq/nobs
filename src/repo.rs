@@ -17,6 +17,7 @@ pub struct RepoDetails {
     pub branches: Vec<String>,
     pub description: String,
     pub commits: Vec<CommitDetails>,
+    pub files: Vec<String>,
 }
 
 #[derive(Clone)]
@@ -79,6 +80,12 @@ impl RepoInfo {
                 it.push(CommitDetails::from(&object)?);
                 Ok(it)
             })?;
+        let files = branch
+            .get()
+            .peel_to_tree()?
+            .iter()
+            .map(|entry| entry.name().unwrap().to_owned())
+            .collect::<Vec<_>>();
         let branches = repo
             .branches(None)?
             .map(|branch| -> Result<_, Error> {
@@ -94,6 +101,7 @@ impl RepoInfo {
             branches,
             description,
             commits,
+            files,
         })
     }
 }
@@ -165,10 +173,11 @@ impl Serialize for RepoDetails {
     where
         S: Serializer,
     {
-        let mut state = serializer.serialize_struct("RepoDetails", 3)?;
+        let mut state = serializer.serialize_struct("RepoDetails", 4)?;
         state.serialize_field("branches", &self.branches)?;
         state.serialize_field("description", &self.description)?;
         state.serialize_field("commits", &self.commits)?;
+        state.serialize_field("files", &self.files)?;
         state.end()
     }
 }

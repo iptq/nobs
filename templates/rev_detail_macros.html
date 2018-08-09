@@ -40,3 +40,27 @@
     </div>
     <pre class="u-pre u-monospace MetadataMessage">{{ commit.message }}</pre>
 {% endmacro %}
+
+{% macro tree_helper(entries) %}
+    {% for entry in entries | sort(attribute="name") %}
+        <li class="FileList-item
+        {% if entry.type == 'directory' %}FileList-item--gitTree
+        {% elif entry.type == 'file' %}FileList-item--regularFile
+        {% endif %}
+            ">
+            <a class="FileList-itemLink" href="{{ entry.name }}">{{ entry.name }}</a>
+        </li>
+    {% endfor %}
+{% endmacro %}
+
+{% macro tree(tree) %}
+    {% set groups = tree.entries | group_by(attribute="type") %}
+    <div class="TreeDetail">
+        <div class="u-sha1 u-monospace TreeDetail-sha1">tree: {{ tree.hash }}</div>
+        <ol class="FileList">
+            {{ self::tree_helper(entries=groups['"directory"']) }}
+            {{ self::tree_helper(entries=groups['"file"']) }}
+        </ol>
+    </div>
+{% endmacro %}
+

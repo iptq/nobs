@@ -29,20 +29,30 @@ pub fn rev_detail(
     // TODO: figure out how to functionalize this later
     let mut objects = Vec::new();
     let mut cur_id;
+    let mut obj = None;
     loop {
         cur_id = match revwalk.next() {
             Some(Ok(value)) => value,
             _ => break,
         };
-        let obj = match repo.repo.find_object(cur_id, None) {
+        let object = match repo.repo.find_object(cur_id, None) {
             Ok(value) => value,
             Err(_) => break,
         };
-        objects.push(RevDetails::from(&obj)?);
-        match obj.kind() {
-            Some(ObjectType::Tag) => (),
+        objects.push(RevDetails::from(&repo, &rev_name, &object)?);
+        obj = Some(object);
+        match obj.as_ref().map(|o| o.kind()) {
+            Some(Some(ObjectType::Tag)) => (),
             _ => break,
         }
+    }
+    match obj.map(|o| (o.kind(), o)) {
+        Some((Some(ObjectType::Commit), o)) => objects.push(RevDetails::from(
+            &repo,
+            &rev_name,
+            o.peel_to_commit().unwrap().tree().unwrap().as_object(),
+        )?),
+        _ => (),
     }
 
     let mut ctx = state.generate_context(&req);

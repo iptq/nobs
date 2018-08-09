@@ -5,6 +5,8 @@
 	{% for object in objects %}
 		{% if object.kind == "commit" %}
 			{{ detail::commit(commit=object.commit) }}
+        {% elif object.kind == "tree" %}
+            {{ detail::tree(tree=object.tree) }}
 		{% endif %}
 	{% endfor %}
 {% endblock %}

@@ -21,5 +21,6 @@ pub mod views;
 pub use app::Nobs;
 pub use config::Config;
 pub use humanize::*;
+pub use middleware::*;
 pub use repo::*;
 pub use state::AppState;

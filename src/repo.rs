@@ -5,6 +5,9 @@ use std::path::PathBuf;
 use failure::{err_msg, Error};
 use git2::{Branch, BranchType, Object, ObjectType, Repository};
 use serde::ser::{self, Serialize, SerializeStruct, Serializer};
+use tera::Value;
+
+use RepoFull;
 
 #[derive(Clone)]
 pub struct RepoInfo {
@@ -24,6 +27,7 @@ pub struct RepoDetails {
 pub struct RevDetails {
     kind: String,
     commit: Option<CommitDetails>,
+    tree: Option<TreeDetails>,
 }
 
 #[derive(Clone)]
@@ -36,6 +40,12 @@ pub struct CommitDetails {
     pub author_time: u64,
     pub summary: String,
     pub message: String,
+}
+
+#[derive(Clone)]
+pub struct TreeDetails {
+    pub hash: String,
+    pub entries: Vec<Value>,
 }
 
 impl RepoInfo {
@@ -107,20 +117,24 @@ impl RepoInfo {
 }
 
 impl RevDetails {
-    pub fn from(object: &Object) -> Result<Self, Error> {
+    pub fn from(repo: &RepoFull, rev_name: &str, object: &Object) -> Result<Self, Error> {
         let mut commit = None;
+        let mut tree = None;
         let kind = match object.kind() {
             Some(ObjectType::Any) => "any",
             Some(ObjectType::Commit) => {
                 commit = CommitDetails::from(&object).ok();
                 "commit"
             }
-            Some(ObjectType::Tree) => "tree",
+            Some(ObjectType::Tree) => {
+                tree = TreeDetails::from(repo, rev_name, &object).ok();
+                "tree"
+            }
             Some(ObjectType::Blob) => "blob",
             Some(ObjectType::Tag) => "tag",
             None => "unknown",
         }.to_owned();
-        Ok(RevDetails { kind, commit })
+        Ok(RevDetails { kind, commit, tree })
     }
 }
 
@@ -142,6 +156,33 @@ impl CommitDetails {
             summary: commit.summary().unwrap_or("").to_owned(),
             message: commit.message().unwrap_or("").to_owned(),
         })
+    }
+}
+
+impl TreeDetails {
+    pub fn from(repo: &RepoFull, rev_name: &str, object: &Object) -> Result<Self, Error> {
+                let tree = object.peel_to_tree().unwrap();
+        let hash = format!("{}", tree.id());
+        let entries = object
+            .peel_to_tree()
+            .unwrap()
+            .iter()
+            .map(|entry| {
+                let name = entry.name().unwrap().to_owned();
+                let url = format!("/{}/+/{}", repo.info.name, rev_name);
+                let filetype = match entry.filemode() {
+                    x if x & 0o100000 > 0 => "file",
+                    x if x & 0o40000 > 0 => "directory",
+                    _ => "unknown",
+                }.to_owned();
+                json!({
+                    "name": name,
+                    "url": url,
+                    "type": filetype,
+                })
+            })
+            .collect::<Vec<_>>();
+        Ok(TreeDetails { hash, entries })
     }
 }
 
@@ -187,10 +228,13 @@ impl Serialize for RevDetails {
     where
         S: Serializer,
     {
-        let mut state = serializer.serialize_struct("RevDetails", 1)?;
+        let mut state = serializer.serialize_struct("RevDetails", 3)?;
         state.serialize_field("kind", &self.kind)?;
         if let Some(ref value) = self.commit {
             state.serialize_field("commit", value)?;
+        }
+        if let Some(ref value) = self.tree {
+            state.serialize_field("tree", value)?;
         }
         state.end()
     }
@@ -210,6 +254,18 @@ impl Serialize for CommitDetails {
         state.serialize_field("committer_time", &self.committer_time)?;
         state.serialize_field("summary", &self.summary)?;
         state.serialize_field("message", &self.message)?;
+        state.end()
+    }
+}
+
+impl Serialize for TreeDetails {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut state = serializer.serialize_struct("TreeDetails", 2)?;
+        state.serialize_field("hash", &self.hash)?;
+        state.serialize_field("entries", &self.entries)?;
         state.end()
     }
 }

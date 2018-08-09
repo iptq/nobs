@@ -6,7 +6,7 @@ pub struct Config {
     pub host: String,
     pub port: u16,
     pub title: String,
-    pub toplevel:String,
+    pub toplevel: String,
     pub recursive: bool,
     pub sources: Vec<String>,
 }

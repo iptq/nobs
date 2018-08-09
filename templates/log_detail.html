@@ -1,0 +1,10 @@
+{% extends "layout.html" %}
+{% import "log_macro.html" as log %}
+
+{% block content %}
+	<div class="CommitLog">
+		{% for commit in commits %}
+			{{ log::wrapper(repo=repo, commit=commit, variant="oneline") }}
+		{% endfor %}
+	</div>
+{% endblock %}

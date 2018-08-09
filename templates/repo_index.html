@@ -1,4 +1,5 @@
 {% extends "layout.html" %}
+{% import "log_macro.html" as log %}
 
 {% block content %}
     <h2 class="RepoDescription">{{ repo.description }}</h2>
@@ -24,11 +25,7 @@
 		<div class="RepoShortlog-log">
 			<ol class="CommitLog">
 				{% for commit in details.commits %}
-					<li class="CommitLog-item CommitLog-item--oneline">
-						<a class="u-sha1 u-monospace CommitLog-sha1" href="/{{ repo.name }}/+/{{ commit.hash }}">{{ commit.short_id }}</a>
-						<a href="/{{ repo.name }}/+/{{ commit.hash }}">{{ commit.summary }}</a>
-						by {{ commit.author }}
-					</li>
+					{{ log::wrapper(repo=repo, commit=commit, variant="oneline") }}
 				{% endfor %}
 			</ol>
 		</div>

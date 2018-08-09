@@ -1,0 +1,14 @@
+{% macro wrapper(repo, commit, variant="oneline") %}
+	<li class="CommitLog-item CommitLog-item--{{ variant }}">
+		{% if variant == "oneline" %}
+			{{ self::oneline(repo=repo, commit=commit) }}
+		{% endif %}
+	</li>
+{% endmacro %}
+
+{% macro oneline(repo, commit) %}
+	<a class="u-sha1 u-monospace CommitLog-sha1" href="/{{ repo.name }}/+/{{ commit.hash }}">{{ commit.short_id }}</a>
+	<a href="/{{ repo.name }}/+/{{ commit.hash }}">{{ commit.summary }}</a>
+	<span class="CommitLog-author" title="TODO: email">by {{ commit.author }}</span>
+	<span class="CommitLog-time" title="TODO: time">&middot; {{ commit.author_time | humanize_time }}</span>
+{% endmacro %}

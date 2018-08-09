@@ -30,7 +30,9 @@ pub struct CommitDetails {
     pub hash: String,
     pub short_id: String,
     pub committer: String,
+    pub committer_time: u64,
     pub author: String,
+    pub author_time: u64,
     pub summary: String,
     pub message: String,
 }
@@ -126,7 +128,9 @@ impl CommitDetails {
                 .map(|g| g.as_str().unwrap_or("").to_owned())
                 .unwrap_or("".to_owned()),
             author: author.name().unwrap_or("").to_owned(),
+            author_time: author.when().seconds() as u64,
             committer: committer.name().unwrap_or("").to_owned(),
+            committer_time: committer.when().seconds() as u64,
             summary: commit.summary().unwrap_or("").to_owned(),
             message: commit.message().unwrap_or("").to_owned(),
         })
@@ -188,11 +192,13 @@ impl Serialize for CommitDetails {
     where
         S: Serializer,
     {
-        let mut state = serializer.serialize_struct("CommitDetails", 5)?;
+        let mut state = serializer.serialize_struct("CommitDetails", 8)?;
         state.serialize_field("hash", &self.hash)?;
         state.serialize_field("short_id", &self.short_id)?;
         state.serialize_field("author", &self.author)?;
+        state.serialize_field("author_time", &self.author_time)?;
         state.serialize_field("committer", &self.committer)?;
+        state.serialize_field("committer_time", &self.committer_time)?;
         state.serialize_field("summary", &self.summary)?;
         state.serialize_field("message", &self.message)?;
         state.end()

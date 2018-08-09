@@ -12,6 +12,7 @@ extern crate serde;
 
 mod app;
 mod config;
+mod humanize;
 pub mod middleware;
 mod repo;
 mod state;
@@ -19,5 +20,6 @@ pub mod views;
 
 pub use app::Nobs;
 pub use config::Config;
+pub use humanize::*;
 pub use repo::*;
 pub use state::AppState;

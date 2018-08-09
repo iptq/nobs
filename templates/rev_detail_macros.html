@@ -5,19 +5,19 @@
                 <th class="Metadata-title">commit</th>
                 <td>{{ commit.hash }}</td>
                 <td>
-                    <span>[<a href="{$logUrl}">log</a>]</span>
+                    <span>[<a href="../+log/{{ commit.hash }}">log</a>]</span>
                     <span>[<a href="{$archiveUrl}">{$archiveType}</a>]</span>
                 </td>
             </tr>
             <tr>
                 <th class="Metadata-title">author</th>
                 <td>{{ commit.author }}</td>
-                <td>{$author.time}</td>
+                <td>{{ commit.author_time | humanize_time }}</td>
             </tr>
             <tr>
                 <th class="Metadata-title">committer</th>
                 <td>{{ commit.committer }}</td>
-                <td>{$committer.time}</td>
+                <td>{{ commit.committer_time | humanize_time }}</td>
             </tr>
             <tr>
                 <th class="Metadata-title">tree</th>

@@ -6,6 +6,7 @@ use failure::{err_msg, Error};
 use git2::Repository;
 use glob::glob;
 
+use humanize::Humanize;
 use views;
 use AppState;
 use Config;
@@ -17,10 +18,11 @@ pub struct Nobs {
 
 impl Nobs {
     pub fn from(config: Config) -> Result<Self, Error> {
-        let templates = Arc::new(compile_templates!(concat!(
-            env!("CARGO_MANIFEST_DIR"),
-            "/templates/**/*"
-        )));
+        let mut tera = compile_templates!(concat!(env!("CARGO_MANIFEST_DIR"), "/templates/**/*"));
+        tera.register_filter("humanize_time", |v, _| {
+            Ok(<i64>::humanize(&v.as_i64().unwrap()).into())
+        });
+        let templates = Arc::new(tera);
         let repositories = Arc::new(Mutex::new(HashMap::new()));
         let state = AppState {
             config: config.clone(),
@@ -90,6 +92,9 @@ impl Nobs {
             .resource("/", |r| r.method(Method::GET).with(views::host_index))
             .resource("/{repo}/+/{rev}", |r| {
                 r.method(Method::GET).with(views::rev_detail)
+            })
+            .resource("/{repo}/+log/{rev}", |r| {
+                r.method(Method::GET).with(views::log_detail)
             })
             .resource("/{repo}", |r| r.method(Method::GET).with(views::repo_index)))
     }

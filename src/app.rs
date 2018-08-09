@@ -1,15 +1,15 @@
-use std::sync::{Arc,Mutex};
 use std::collections::HashMap;
+use std::sync::{Arc, Mutex};
 
-use actix_web::{App, http::Method, fs};
+use actix_web::{fs, http::Method, App};
 use failure::Error;
-use glob::glob;
 use git2::Repository;
+use glob::glob;
 
+use views;
 use AppState;
 use Config;
 use RepoInfo;
-use views;
 
 pub struct Nobs {
     state: AppState,

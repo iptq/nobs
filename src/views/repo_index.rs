@@ -15,10 +15,12 @@ pub fn repo_index(
         Some(value) => value,
         None => return Err(error::ErrorNotFound("Repository not found.")),
     };
+    let details = repo.get_details();
 
     let mut ctx = state.generate_context(&req);
     ctx.add("title", repo_name);
     ctx.add("repo", &repo);
+    ctx.add("details", &details);
 
     let s = state
         .templates

@@ -20,6 +20,7 @@ impl AppState {
         let parts = path.split("/").collect::<Vec<_>>();
 
         let mut result = Vec::new();
+        result.push(json!({ "text": "nobs", "url": "/" }));
         match parts.get(1) {
             Some(&"") | None => return Ok(result),
             Some(value) => {

@@ -9,10 +9,10 @@ extern crate tera;
 extern crate serde_json;
 extern crate serde;
 
+mod app;
 mod config;
 mod repo;
 mod state;
-mod app;
 pub mod views;
 
 pub use app::Nobs;

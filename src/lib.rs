@@ -7,17 +7,22 @@ extern crate glob;
 extern crate tera;
 #[macro_use]
 extern crate serde_json;
+extern crate serde;
 
 mod config;
 mod views;
 
 use std::collections::HashMap;
+use std::fs::File;
+use std::io::Read;
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 
-use actix_web::{fs, http::Method, App};
+use actix_web::{fs, http::Method, App, HttpRequest};
 use failure::Error;
-use tera::{Tera,Context};
+use git2::Repository;
+use serde::ser::{Serialize, SerializeStruct, Serializer};
+use tera::{Context, Tera, Value};
 
 pub use config::Config;
 
@@ -27,7 +32,9 @@ pub struct Nobs {
 
 #[derive(Clone)]
 pub struct RepoInfo {
+    pub name: String,
     pub path: PathBuf,
+    pub description: String,
 }
 
 #[derive(Clone)]
@@ -38,12 +45,44 @@ pub struct AppState {
 }
 
 impl AppState {
-    fn generate_context(&self) -> Context {
-        let mut ctx = Context::new();
-        ctx.add("site", &json!({
+    fn generate_breadcrumbs(&self, req: &HttpRequest<Self>) -> Result<Vec<Value>, Error> {
+        let path = req.path();
+        let parts = path.split("/").collect::<Vec<_>>();
+
+        let mut result = Vec::new();
+        match parts.get(1) {
+            Some(&"") | None => return Ok(result),
+            Some(value) => {
+                result.push(json!({ "text": String::from(*value), "url": format!("/{}", value) }))
+            }
+        };
+        Ok(result)
+    }
+    fn generate_context(&self, req: &HttpRequest<Self>) -> Context {
+        let site_metadata = &json!({
             "title": self.config.title,
-        }));
-                ctx
+        });
+
+        let mut ctx = Context::new();
+        ctx.add("site", site_metadata);
+        match self.generate_breadcrumbs(req) {
+            Ok(breadcrumbs) => ctx.add("breadcrumbs", &breadcrumbs),
+            _ => (),
+        }
+        ctx
+    }
+}
+
+impl Serialize for RepoInfo {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut state = serializer.serialize_struct("Repository", 3)?;
+        state.serialize_field("name", &self.name)?;
+        state.serialize_field("path", &self.path)?;
+        state.serialize_field("description", &self.description)?;
+        state.end()
     }
 }
 
@@ -73,8 +112,26 @@ impl Nobs {
         for entry in glob::glob(pattern).expect("Bad glob pattern") {
             match entry {
                 Ok(path) => {
+                    let path = path.canonicalize().unwrap_or(path);
                     let name = path.file_stem().unwrap().to_str().unwrap().to_owned();
-                    let info = RepoInfo { path };
+
+                    // TODO: don't unwrap
+                    let _ = Repository::open(&path).unwrap();
+                    let description_file = {
+                        let mut path = path.clone();
+                        path.push("description");
+                        path
+                    };
+                    let mut description = String::new();
+                    let mut file = File::open(&description_file).unwrap();
+                    file.read_to_string(&mut description).unwrap();
+                    description.trim();
+
+                    let info = RepoInfo {
+                        name: name.clone(),
+                        path,
+                        description,
+                    };
                     self.state.repositories.lock().unwrap().insert(name, info);
                 }
                 Err(_) => (),

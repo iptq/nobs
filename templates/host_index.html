@@ -10,10 +10,10 @@
                 Description
             </span>
         </div>
-        {% for repo in repositories %}
+        {% for repo in repositories | sort(attribute="name") %}
             <a class="RepoList-item" href="/{{ repo.name }}">
                 <span class="RepoList-itemName">{{ repo.name }}</span>
-                <span class="RepoList-itemDescription">nope</span>
+                <span class="RepoList-itemDescription">{{ repo.description }}</span>
             </a>
         {% endfor %}
     </div>

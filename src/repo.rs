@@ -32,6 +32,7 @@ pub struct CommitDetails {
     pub committer: String,
     pub author: String,
     pub summary: String,
+    pub message: String,
 }
 
 impl RepoInfo {
@@ -127,6 +128,7 @@ impl CommitDetails {
             author: author.name().unwrap_or("").to_owned(),
             committer: committer.name().unwrap_or("").to_owned(),
             summary: commit.summary().unwrap_or("").to_owned(),
+            message: commit.message().unwrap_or("").to_owned(),
         })
     }
 }
@@ -192,6 +194,7 @@ impl Serialize for CommitDetails {
         state.serialize_field("author", &self.author)?;
         state.serialize_field("committer", &self.committer)?;
         state.serialize_field("summary", &self.summary)?;
+        state.serialize_field("message", &self.message)?;
         state.end()
     }
 }

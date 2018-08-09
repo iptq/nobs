@@ -5,16 +5,14 @@
                 <th class="Metadata-title">commit</th>
                 <td>{{ commit.hash }}</td>
                 <td>
-                <span>
-                [<a href="{$logUrl}">{msg desc="text for the log link"}log{/msg}</a>]
-                </span>
-                {sp}<span>[<a href="{$archiveUrl}">{$archiveType}</a>]</span>
+                    <span>[<a href="{$logUrl}">log</a>]</span>
+                    <span>[<a href="{$archiveUrl}">{$archiveType}</a>]</span>
                 </td>
             </tr>
             <tr>
                 <th class="Metadata-title">author</th>
                 <td>{{ commit.author }}</td>
-                <td>time</td>
+                <td>{$author.time}</td>
             </tr>
             <tr>
                 <th class="Metadata-title">committer</th>
@@ -22,22 +20,23 @@
                 <td>{$committer.time}</td>
             </tr>
             <tr>
-            <th class="Metadata-title">{msg desc="Header for tree SHA entry"}tree{/msg}</th>
-            <td><a href="{$treeUrl}">{$tree}</a></td>
+                <th class="Metadata-title">tree</th>
+                <td><a href="{$treeUrl}">{$tree}</a></td>
             </tr>
-            {for $parent in $parents}
+            {% for parent in [] %}
             <tr>
-            <th class="Metadata-title">{msg desc="Header for parent SHA"}parent{/msg}</th>
-            <td>
-            <a href="{$parent.url}">{$parent.sha}</a>
-            {sp}<span>
-            [<a href="{$parent.diffUrl}">{msg desc="text for the parent diff link"}diff{/msg}</a>]
-            {if isNonnull($parent.blameUrl)}
-            {sp}[<a href="{$parent.blameUrl}">{msg desc="text for the parent blame link"}blame{/msg}</a>]
-            {/if}
-            </span>
-            </td>
+                <th class="Metadata-title">parent</th>
+                <td>
+                    <a href="{$parent.url}">{$parent.sha}</a>
+                    <span>[<a href="{$parent.diffUrl}">diff</a>]
+                    {if isNonnull($parent.blameUrl)}
+                        [<a href="{$parent.blameUrl}">blame</a>]
+                    {/if}
+                    </span>
+                </td>
             </tr>
+            {% endfor %}
         </table>
     </div>
+    <pre class="u-pre u-monospace MetadataMessage">{{ commit.message }}</pre>
 {% endmacro %}

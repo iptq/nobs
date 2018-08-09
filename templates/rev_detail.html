@@ -2,7 +2,6 @@
 {% import "rev_detail_macros.html" as detail %}
 
 {% block content %}
-	{{ objects | json_encode() }}
 	{% for object in objects %}
 		{% if object.kind == "commit" %}
 			{{ detail::commit(commit=object.commit) }}

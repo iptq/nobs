@@ -49,7 +49,7 @@ pub fn log_detail(
     }
 
     let mut ctx = state.generate_context(&req);
-    ctx.add("title", &format!("{} - {}", rev_name, repo.info.name));
+    ctx.add("title", &format!("Log - {} - {}", rev_name, repo.info.name));
     ctx.add("repo", &repo.info);
     ctx.add("commits", &commits);
 

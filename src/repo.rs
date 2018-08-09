@@ -2,7 +2,7 @@ use std::fs::File;
 use std::io::Read;
 use std::path::PathBuf;
 
-use git2::Repository;
+use git2::{Branch,BranchType, Repository};
 use serde::ser::{Serialize, SerializeStruct, Serializer};
 
 #[derive(Clone)]
@@ -18,7 +18,9 @@ pub struct RepoDetails {
 }
 
 #[derive(Clone)]
-pub struct CommitDetails {}
+pub struct CommitDetails {
+    pub summary: String,
+}
 
 impl RepoInfo {
     pub fn get_details(&self) -> RepoDetails {
@@ -31,13 +33,23 @@ impl RepoInfo {
         let mut description = String::new();
         let mut file = File::open(&description_file).unwrap();
         file.read_to_string(&mut description).unwrap();
+        println!("{:?}", repo.revwalk().unwrap().collect::<Vec<_>>());
 
-        let commits = repo
-            .revwalk()
-            .unwrap()
+        let mut revwalk = repo.revwalk().unwrap();
+        let branch = repo.find_branch("master", BranchType::Local).unwrap_or_else(|_| {
+                repo.branches(None).unwrap().next().unwrap().unwrap().0
+            });
+        let commit = branch.get().peel_to_commit().unwrap();
+        revwalk.push(commit.id()).unwrap();
+        let commits = revwalk
             .take(5)
-            .map(|oid| repo.find_commit(oid).unwrap())
-            .map(|commit| CommitDetails {})
+            .filter_map(|oid| match oid {
+                Ok(oid) => Some(repo.find_commit(oid).unwrap()),
+                _ => None,
+            })
+            .map(|commit| CommitDetails {
+                summary: commit.summary().unwrap().to_owned(),
+            })
             .collect::<Vec<_>>();
         RepoDetails {
             description,
@@ -78,7 +90,8 @@ impl Serialize for CommitDetails {
     where
         S: Serializer,
     {
-        let mut state = serializer.serialize_struct("CommitDetails", 0)?;
+        let mut state = serializer.serialize_struct("CommitDetails", 1)?;
+        state.serialize_field("summary", &self.summary)?;
         state.end()
     }
 }

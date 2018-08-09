@@ -2,10 +2,26 @@
 
 {% block content %}
     <h2 class="RepoDescription">{{ repo.description }}</h2>
+
     <div class="CloneRepo">
-    <div class="CloneRepo-title">Clone this repo:</div>
-        <input type="text" class="u-monospace CloneRepo-command"
+	    <div class="CloneRepo-title">Clone this repo:</div>
+	    <input type="text" class="u-monospace CloneRepo-command"
             onclick="this.focus();if(this.selectionStart==this.selectionEnd){this.select()}"
             readonly="readonly" value="git clone lol">
     </div>
+
+    <div class="RepoShortlog">
+		<div class="RepoShortlog-refs">
+		</div>
+		<div class="RepoShortlog-log">
+			<ol class="CommitLog">
+				{% for commit in details.commits %}
+					<li class="CommitLog-item CommitLog-item--oneline">
+						<a class="u-sha1 u-monospace CommitLog-sha1" href="">55a49f4</a>
+						<a href="">{{ commit.summary }}</a>
+					</li>
+				{% endfor %}
+			</ol>
+		</div>
+  </div>
 {% endblock %}

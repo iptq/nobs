@@ -14,7 +14,7 @@ pub fn host_index(
     };
 
     let mut ctx = state.generate_context(&req);
-    ctx.add("title", "Host Index");
+    ctx.add("title", "Index");
     ctx.add("repositories", &repositories);
 
     let s = state

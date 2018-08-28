@@ -56,14 +56,14 @@ impl RepoInfo {
         // get branches and commits
         let mut revwalk = repo.revwalk()?;
         let mut branches = repo.branches(None)?;
-        let branch: Branch = repo.find_branch("master", BranchType::Local).or_else(
-            |_| -> Result<_, Error> {
-                Ok(branches
-                    .next()
-                    .ok_or(err_msg("No branches exist in this repo."))??
-                    .0)
-            },
-        )?;
+        let branch: Branch =
+            repo.find_branch("master", BranchType::Local)
+                .or_else(|_| -> Result<_, Error> {
+                    Ok(branches
+                        .next()
+                        .ok_or(err_msg("No branches exist in this repo."))??
+                        .0)
+                })?;
         let commit = branch.get().peel_to_commit()?;
         revwalk.push(commit.id())?;
         let commits = revwalk
@@ -73,8 +73,7 @@ impl RepoInfo {
                     Err(_) => None,
                 },
                 _ => None,
-            })
-            .take(5)
+            }).take(5)
             .try_fold(Vec::new(), |mut it, object| -> Result<_, Error> {
                 it.push(CommitDetails::from(&object)?);
                 Ok(it)
@@ -87,8 +86,7 @@ impl RepoInfo {
                     BranchType::Local => Ok(branch.name()?.ok_or(err_msg("Not UTF-8"))?.to_owned()),
                     _ => Err(err_msg("Not a local branch.")),
                 }
-            })
-            .filter_map(Result::ok)
+            }).filter_map(Result::ok)
             .collect::<Vec<_>>();
         Ok(RepoDetails {
             branches,

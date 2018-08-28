@@ -1,0 +1,26 @@
+language: rust
+sudo: false
+
+rust:
+  - stable
+  - nightly
+os: linux
+matrix:
+  fast_finish: true
+
+cache: cargo
+
+script:
+  - cargo test --all
+before_deploy:
+  - cargo build --release --all
+
+deploy:
+  - provider: releases
+    api_key: $AUTH_TOKEN
+    file:
+      - target/release/nobs
+    on:
+      condition: $TRAVIS_RUST_VERSION = stable
+      tags: true
+    skip_cleanup: true

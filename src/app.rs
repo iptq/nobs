@@ -2,11 +2,11 @@ use std::collections::HashMap;
 use std::path::Path;
 use std::sync::{Arc, Mutex};
 
-use actix_web::{fs, http::Method, App, Error as actix_error, HttpRequest, HttpResponse};
+use actix_web::{http::Method, App, Error as actix_error, HttpRequest, HttpResponse};
 use failure::{err_msg, Error};
 use git2::Repository;
-use mktemp::Temp;
 use walkdir::WalkDir;
+use tera::Tera;
 use mime_guess::guess_mime_type;
 
 use humanize::Humanize;
@@ -29,13 +29,7 @@ struct Static;
 
 impl Nobs {
     pub fn from(config: &Config) -> Result<Self, Error> {
-        let mut tera = {
-            // TODO: empty tera instance????
-            let mut dir = Temp::new_dir().unwrap();
-            let tera = compile_templates!(&format!("{}/*", dir.to_path_buf().to_str().unwrap()));
-            dir.release();
-            tera
-        };
+        let mut tera = Tera::default();
         for item in Templates::keys() {
             println!("loading item {}", &item);
             let asset = Templates::get(item).unwrap();

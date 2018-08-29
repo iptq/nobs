@@ -21,7 +21,7 @@ deploy:
   - provider: releases
     api_key: $AUTH_TOKEN
     file:
-      - "nobs-${TRAVIS_TAG}-${TRAVIS_OS_NAME}.*"
+      - "nobs-*"
     on:
       condition: $TRAVIS_RUST_VERSION = stable
       tags: true

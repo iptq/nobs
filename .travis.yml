@@ -15,7 +15,7 @@ cache: cargo
 script:
   - cargo test --all
 before_deploy:
-  - ./ci/build-release.sh
+  - ./ci/build-release.sh nobs ${TRAVIS_TAG}-${TRAVIS_OS_NAME}
 
 deploy:
   - provider: releases

@@ -4,7 +4,9 @@ version = "0.3.0"
 authors = ["Michael Zhang <failed.down@gmail.com>"]
 
 [workspace]
-members = [".", "embed"]
+members = [
+	".", "components/embed"
+]
 
 [dependencies]
 actix-web = "0.7"

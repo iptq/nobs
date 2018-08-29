@@ -10,8 +10,8 @@ extern crate embed;
 extern crate tera;
 #[macro_use]
 extern crate serde_json;
-extern crate serde;
 extern crate mime_guess;
+extern crate serde;
 
 mod app;
 mod config;

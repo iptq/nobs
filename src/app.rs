@@ -5,9 +5,9 @@ use std::sync::{Arc, Mutex};
 use actix_web::{http::Method, App, Error as actix_error, HttpRequest, HttpResponse};
 use failure::{err_msg, Error};
 use git2::Repository;
-use walkdir::WalkDir;
-use tera::Tera;
 use mime_guess::guess_mime_type;
+use tera::Tera;
+use walkdir::WalkDir;
 
 use humanize::Humanize;
 use views;
@@ -69,9 +69,7 @@ fn static_handler(req: &HttpRequest<AppState>) -> Result<HttpResponse, Error> {
     let path = &req.path()["/+static/".len()..];
     let mime = guess_mime_type(path);
     Ok(match Static::get(path) {
-        Some(content) => HttpResponse::Ok()
-            .content_type(mime.as_ref())
-            .body(content),
+        Some(content) => HttpResponse::Ok().content_type(mime.as_ref()).body(content),
         None => HttpResponse::NotFound().body("404 Not Found"),
     })
 }

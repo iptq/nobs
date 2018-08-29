@@ -3,14 +3,18 @@ name = "nobs"
 version = "0.1.0"
 authors = ["Michael Zhang <failed.down@gmail.com>"]
 
+[workspace]
+members = [".", "embed"]
+
 [dependencies]
 actix-web = "0.7"
 comrak = "0.2"
 config = { version = "0.9", default-features = false, features = ["toml"] }
+embed = { version = "*", path = "embed" }
 failure = "0.1"
 git2 = "0.7"
 glob = "0.2"
-rust-embed = "3.0"
+mktemp = "0.3"
 serde = "1.0"
 serde_json = "1.0"
 tera = "0.11"

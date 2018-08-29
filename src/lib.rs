@@ -4,9 +4,10 @@ extern crate config as _config;
 extern crate failure;
 extern crate git2;
 extern crate glob;
+extern crate mktemp;
 extern crate walkdir;
 #[macro_use]
-extern crate rust_embed;
+extern crate embed;
 #[macro_use]
 extern crate tera;
 #[macro_use]

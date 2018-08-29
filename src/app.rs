@@ -5,6 +5,7 @@ use std::sync::{Arc, Mutex};
 use actix_web::{fs, http::Method, App, Error as actix_error};
 use failure::{err_msg, Error};
 use git2::Repository;
+use mktemp::Temp;
 use walkdir::WalkDir;
 
 use humanize::Humanize;
@@ -23,7 +24,20 @@ struct Asset;
 
 impl Nobs {
     pub fn from(config: &Config) -> Result<Self, Error> {
-        let mut tera = compile_templates!(concat!(env!("CARGO_MANIFEST_DIR"), "/templates/**/*"));
+        let mut tera = {
+            // TODO: empty tera instance????
+            let mut dir = Temp::new_dir().unwrap();
+            let tera = compile_templates!(&format!("{}/*", dir.to_path_buf().to_str().unwrap()));
+            dir.release();
+            tera
+        };
+        for item in Asset::keys() {
+            println!("loading item {}", &item);
+            let asset = Asset::get(item).unwrap();
+            let template = String::from_utf8(asset).unwrap();
+            tera.add_raw_template(item, template.as_ref()).unwrap();
+        }
+
         tera.register_filter("humanize_time", |v, _| {
             Ok(<i64>::humanize(&v.as_i64().unwrap()).into())
         });

@@ -13,6 +13,7 @@ extern crate tera;
 #[macro_use]
 extern crate serde_json;
 extern crate serde;
+extern crate mime_guess;
 
 mod app;
 mod config;

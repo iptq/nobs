@@ -68,7 +68,7 @@ fn generate_assets(ident: &syn::Ident, folder_path: impl AsRef<Path>) -> quote::
 fn generate_assets(ident: &syn::Ident, folder_path: impl AsRef<Path>) -> quote::Tokens {
     use walkdir::WalkDir;
     let mut values = Vec::<Tokens>::new();
-    for entry in WalkDir::new(folder_path.as_ref().to_path_buf())
+    for entry in WalkDir::new(&folder_path)
         .into_iter()
         .filter_map(|e| e.ok())
         .filter(|e| e.file_type().is_file())
@@ -82,6 +82,7 @@ fn generate_assets(ident: &syn::Ident, folder_path: impl AsRef<Path>) -> quote::
                 .to_str()
                 .expect("Path does not have a string representation"),
         );
+        println!("key: {}", key);
         let canonical_path =
             std::fs::canonicalize(entry.path()).expect("Could not get canonical path");
         let canonical_path_str = canonical_path.to_str();

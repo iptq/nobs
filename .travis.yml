@@ -1,5 +1,5 @@
 language: rust
-sudo: false
+sudo: required
 
 rust:
   - stable
@@ -7,19 +7,21 @@ rust:
 os: linux
 matrix:
   fast_finish: true
+services:
+  - docker
 
 cache: cargo
 
 script:
   - cargo test --all
 before_deploy:
-  - cargo build --release --all
+  - ./ci/build-release.sh
 
 deploy:
   - provider: releases
     api_key: $AUTH_TOKEN
     file:
-      - target/release/nobs
+      - "nobs-${TRAVIS_TAG}-${TRAVIS_OS_NAME}.*"
     on:
       condition: $TRAVIS_RUST_VERSION = stable
       tags: true

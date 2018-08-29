@@ -2,11 +2,12 @@ use std::collections::HashMap;
 use std::path::Path;
 use std::sync::{Arc, Mutex};
 
-use actix_web::{fs, http::Method, App, Error as actix_error};
+use actix_web::{fs, http::Method, App, Error as actix_error, HttpRequest, HttpResponse};
 use failure::{err_msg, Error};
 use git2::Repository;
 use mktemp::Temp;
 use walkdir::WalkDir;
+use mime_guess::guess_mime_type;
 
 use humanize::Humanize;
 use views;
@@ -20,7 +21,11 @@ pub struct Nobs {
 
 #[derive(RustEmbed)]
 #[folder = "templates"]
-struct Asset;
+struct Templates;
+
+#[derive(RustEmbed)]
+#[folder = "static"]
+struct Static;
 
 impl Nobs {
     pub fn from(config: &Config) -> Result<Self, Error> {
@@ -31,9 +36,9 @@ impl Nobs {
             dir.release();
             tera
         };
-        for item in Asset::keys() {
+        for item in Templates::keys() {
             println!("loading item {}", &item);
-            let asset = Asset::get(item).unwrap();
+            let asset = Templates::get(item).unwrap();
             let template = String::from_utf8(asset).unwrap();
             tera.add_raw_template(item, template.as_ref()).unwrap();
         }
@@ -66,10 +71,21 @@ impl Nobs {
     }
 }
 
+fn static_handler(req: &HttpRequest<AppState>) -> Result<HttpResponse, Error> {
+    let path = &req.path()["/+static/".len()..];
+    let mime = guess_mime_type(path);
+    Ok(match Static::get(path) {
+        Some(content) => HttpResponse::Ok()
+            .content_type(mime.as_ref())
+            .body(content),
+        None => HttpResponse::NotFound().body("404 Not Found"),
+    })
+}
+
 impl Nobs {
     fn add_source(&mut self, path: impl AsRef<Path>) -> Result<(), Error> {
         let mut failed = Vec::new();
-        let mut iter = WalkDir::new(&path).into_iter();
+        let mut iter = WalkDir::new(&path).follow_links(true).into_iter();
         loop {
             let entry = match iter.next() {
                 None => break,
@@ -122,7 +138,7 @@ impl Nobs {
 
     pub fn build_app(&self) -> Result<App<AppState>, actix_error> {
         Ok(App::with_state(self.state.clone())
-            .handler("/+static", fs::StaticFiles::new("static")?)
+            .handler("/+static", static_handler)
             .resource("/", |r| r.method(Method::GET).with(views::host_index))
             .resource("/{repo}/+/{rev}", |r| {
                 r.method(Method::GET).with(views::rev_detail)

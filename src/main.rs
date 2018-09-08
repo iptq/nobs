@@ -2,8 +2,6 @@ extern crate config;
 extern crate failure;
 extern crate nobs;
 
-use std::sync::Arc;
-
 use failure::Error;
 use nobs::{Config, Nobs};
 
@@ -15,7 +13,7 @@ fn main() -> Result<(), Error> {
     cfg.merge(config::File::with_name("nobs"))?;
 
     let appcfg = Config::from_cfg(&cfg)?;
-    let app = Arc::new(Nobs::from(&appcfg)?);
+    let app = Nobs::from(&appcfg)?;
 
     app.run();
     Ok(())

@@ -38,17 +38,4 @@ impl AppState {
         };
         Ok(result)
     }
-    pub fn generate_context(&self, req: &HttpRequest<Self>) -> Context {
-        let site_metadata = &json!({
-            "title": self.config.title,
-        });
-
-        let mut ctx = Context::new();
-        ctx.add("site", site_metadata);
-        match self.generate_breadcrumbs(req) {
-            Ok(breadcrumbs) => ctx.add("breadcrumbs", &breadcrumbs),
-            _ => (),
-        }
-        ctx
-    }
 }

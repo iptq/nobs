@@ -1,10 +1,15 @@
+use std::sync::Arc;
+
 use futures::{future, Future};
 use hyper::{service::Service, Body, Request, Response};
 
-use super::statics::Static;
+use super::{HostIndex, Static};
+use app::State;
 use error::{Compat, Error};
 
-pub struct Parser;
+pub struct Parser {
+    state: Arc<State>,
+}
 
 impl Service for Parser {
     type ReqBody = Body;
@@ -17,6 +22,13 @@ impl Service for Parser {
             Some(pq) => pq.path().to_owned(),
             None => return Box::new(future::err(Error::PathMissing.into())),
         };
+        if path == "/" {
+            return Box::new(
+                HostIndex::new(self.state.clone())
+                    .call(req)
+                    .or_else(|err| Box::new(future::ok(err.into()))),
+            );
+        }
         if path.starts_with("/+static") {
             return Box::new(
                 Static::default()
@@ -28,8 +40,8 @@ impl Service for Parser {
     }
 }
 
-impl Default for Parser {
-    fn default() -> Self {
-        Parser
+impl Parser {
+    pub fn new(state: Arc<State>) -> Self {
+        Parser { state }
     }
 }

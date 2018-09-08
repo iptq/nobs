@@ -10,6 +10,7 @@ extern crate humanize;
 extern crate hyper;
 extern crate mime_guess;
 extern crate serde;
+#[macro_use]
 extern crate serde_json;
 extern crate tera;
 extern crate walkdir;

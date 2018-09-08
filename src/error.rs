@@ -18,6 +18,10 @@ pub enum Error {
     #[fail(display = "resource not found: {}", path)]
     NotFound { path: String },
 
+    // TODO: figure out how to satisfy Send + Sync
+    #[fail(display = "template failed to render: {}", inner)]
+    TemplateRenderFail { inner: String },
+
     #[fail(display = "path missing")]
     PathMissing,
 }

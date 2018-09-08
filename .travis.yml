@@ -17,6 +17,8 @@ script:
 before_deploy:
   - ./ci/build-release.sh nobs ${TRAVIS_TAG}-${TRAVIS_OS_NAME}
 
+notifications:
+  email: false
 deploy:
   - provider: releases
     api_key: $AUTH_TOKEN

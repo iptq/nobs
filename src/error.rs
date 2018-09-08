@@ -1,6 +1,6 @@
 use std::fmt;
 
-use hyper::{Body, Response};
+use hyper::{Body, Response, StatusCode};
 
 #[derive(Debug)]
 pub struct Compat(Error);
@@ -15,7 +15,7 @@ impl ::std::error::Error for Compat {}
 
 #[derive(Debug, Fail)]
 pub enum Error {
-    #[fail(display = "not found: {}", path)]
+    #[fail(display = "resource not found: {}", path)]
     NotFound { path: String },
 
     #[fail(display = "path missing")]
@@ -30,6 +30,13 @@ impl From<Error> for Compat {
 
 impl From<Compat> for Response<Body> {
     fn from(err: Compat) -> Self {
-        Response::new(Body::from(format!("{}", err)))
+        let status = match err {
+            Compat(Error::NotFound { .. }) => StatusCode::NOT_FOUND,
+            _ => StatusCode::INTERNAL_SERVER_ERROR,
+        };
+        Response::builder()
+            .status(status)
+            .body(Body::from(format!("{}", err)))
+            .unwrap()
     }
 }

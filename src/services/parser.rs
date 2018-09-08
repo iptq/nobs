@@ -18,11 +18,11 @@ impl Service for Parser {
             None => return Box::new(future::err(Error::PathMissing.into())),
         };
         if path.starts_with("/+static") {
-            return Box::new(Static::default().call(req).or_else::<_, Box<
-                Future<Item = Response<Body>, Error = _> + Send,
-            >>(|err| {
-                Box::new(future::ok(err.into()))
-            }));
+            return Box::new(
+                Static::default()
+                    .call(req)
+                    .or_else(|err| Box::new(future::ok(err.into()))),
+            );
         }
         Box::new(future::ok(Response::new(Body::from("nobs"))))
     }

@@ -1,7 +1,6 @@
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
-use actix_web::{Error, HttpRequest};
 use tera::{Context, Tera, Value};
 
 use Config;

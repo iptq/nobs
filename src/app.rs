@@ -2,30 +2,27 @@ use std::collections::HashMap;
 use std::path::Path;
 use std::sync::{Arc, Mutex};
 
-use actix_web::{http::Method, App, Error as actix_error, HttpRequest, HttpResponse};
-use failure::{err_msg, Error};
+use failure::{err_msg, Compat, Error};
+use futures::{future, Future};
 use git2::Repository;
-use mime_guess::guess_mime_type;
+use hyper::{self, Server};
 use tera::Tera;
 use walkdir::WalkDir;
 
 use humanize::Humanize;
-use views;
-use AppState;
+use services::parser::Parser;
 use Config;
 use RepoInfo;
 
 pub struct Nobs {
-    state: AppState,
+    pub config: Config,
+    pub templates: Arc<Tera>,
+    pub repositories: Arc<Mutex<HashMap<String, RepoInfo>>>,
 }
 
 #[derive(RustEmbed)]
 #[folder = "templates"]
 struct Templates;
-
-#[derive(RustEmbed)]
-#[folder = "static"]
-struct Static;
 
 impl Nobs {
     pub fn from(config: &Config) -> Result<Self, Error> {
@@ -43,13 +40,12 @@ impl Nobs {
 
         let templates = Arc::new(tera);
         let repositories = Arc::new(Mutex::new(HashMap::new()));
-        let state = AppState {
+
+        let mut app = Nobs {
             config: config.clone(),
             templates,
             repositories,
         };
-
-        let mut app = Nobs { state };
         let mut failed = Vec::new();
         for source in config.sources.iter() {
             match app.add_source(&source) {
@@ -65,14 +61,14 @@ impl Nobs {
     }
 }
 
-fn static_handler(req: &HttpRequest<AppState>) -> Result<HttpResponse, Error> {
-    let path = &req.path()["/+static/".len()..];
-    let mime = guess_mime_type(path);
-    Ok(match Static::get(path) {
-        Some(content) => HttpResponse::Ok().content_type(mime.as_ref()).body(content),
-        None => HttpResponse::NotFound().body("404 Not Found"),
-    })
-}
+// fn static_handler(req: &HttpRequest<AppState>) -> Result<HttpResponse, Error> {
+//     let path = &req.path()["/+static/".len()..];
+//     let mime = guess_mime_type(path);
+//     Ok(match Static::get(path) {
+//         Some(content) => HttpResponse::Ok().content_type(mime.as_ref()).body(content),
+//         None => HttpResponse::NotFound().body("404 Not Found"),
+//     })
+// }
 
 impl Nobs {
     fn add_source(&mut self, path: impl AsRef<Path>) -> Result<(), Error> {
@@ -112,7 +108,7 @@ impl Nobs {
                             }
                             _ => (),
                         }
-                        match self.state.repositories.lock() {
+                        match self.repositories.lock() {
                             Ok(mut repositories) => repositories.insert(name, info),
                             _ => bail!("Could not acquire lock on repositories."),
                         };
@@ -128,14 +124,18 @@ impl Nobs {
         Ok(())
     }
 
-    pub fn build_app(&self) -> Result<App<AppState>, actix_error> {
-        Ok(App::with_state(self.state.clone())
-            .handler("/+static", static_handler)
-            .resource("/", |r| r.method(Method::GET).with(views::host_index))
-            .resource("/{repo}/+/{rev}", |r| {
-                r.method(Method::GET).with(views::rev_detail)
-            }).resource("/{repo}/+log/{rev}", |r| {
-                r.method(Method::GET).with(views::log_detail)
-            }).resource("/{repo}", |r| r.method(Method::GET).with(views::repo_index)))
+    pub fn run(&self) {
+        let addr = self.config.addr.parse().unwrap();
+        let server =
+            Server::bind(&addr).serve(|| future::ok::<_, Compat<Error>>(Parser::default()));
+        hyper::rt::run(server.map_err(|_| ()));
+        // Ok(App::with_state(self.state.clone())
+        //     .handler("/+static", static_handler)
+        //     .resource("/", |r| r.method(Method::GET).with(views::host_index))
+        //     .resource("/{repo}/+/{rev}", |r| {
+        //         r.method(Method::GET).with(views::rev_detail)
+        //     }).resource("/{repo}/+log/{rev}", |r| {
+        //         r.method(Method::GET).with(views::log_detail)
+        //     }).resource("/{repo}", |r| r.method(Method::GET).with(views::repo_index)))
     }
 }

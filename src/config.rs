@@ -3,8 +3,7 @@ use failure::Error;
 
 #[derive(Clone)]
 pub struct Config {
-    pub host: String,
-    pub port: u16,
+    pub addr: String,
     pub title: String,
     pub toplevel: String,
     pub recursive: bool,
@@ -13,8 +12,7 @@ pub struct Config {
 
 impl Config {
     pub fn from_cfg(cfg: &_config::Config) -> Result<Self, Error> {
-        let host = cfg.get_str("host")?;
-        let port = cfg.get_int("port")? as u16;
+        let addr = cfg.get_str("addr")?;
         let title = cfg.get_str("title")?;
         let toplevel = cfg.get_str("toplevel")?;
         let recursive = cfg.get_bool("recursive")?;
@@ -26,8 +24,7 @@ impl Config {
             },
         )?;
         Ok(Config {
-            host,
-            port,
+            addr,
             title,
             toplevel,
             recursive,

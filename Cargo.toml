@@ -5,7 +5,7 @@ authors = ["Michael Zhang <failed.down@gmail.com>"]
 
 [workspace]
 members = [
-	".", "components/embed"
+	".", "components/embed", "components/humanize"
 ]
 
 [dependencies]
@@ -14,6 +14,7 @@ config = { version = "0.9", default-features = false, features = ["toml"] }
 embed = { version = "*", path = "components/embed" }
 failure = "0.1"
 futures = "0.1"
+humanize = { version = "*", path = "components/humanize" }
 git2 = "0.7"
 glob = "0.2"
 hyper = "0.12"

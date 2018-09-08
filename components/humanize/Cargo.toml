@@ -1,0 +1,9 @@
+[package]
+name = "humanize"
+description = "based on chrono's humanize"
+version = "0.1.0"
+authors = ["Michael Zhang <failed.down@gmail.com>"]
+
+[dependencies]
+git2 = "0.7"
+tera = "0.11"

@@ -5,10 +5,11 @@ authors = ["Michael Zhang <failed.down@gmail.com>"]
 
 [workspace]
 members = [
-	".", "components/embed", "components/humanize"
+	".", "components/cache", "components/embed", "components/humanize"
 ]
 
 [dependencies]
+cache = { version = "*", path = "components/cache" }
 comrak = "0.2"
 config = { version = "0.9", default-features = false, features = ["toml"] }
 embed = { version = "*", path = "components/embed" }

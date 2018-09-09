@@ -31,12 +31,19 @@ struct Templates;
 impl Nobs {
     pub fn from(config: &Config) -> Result<Self, Error> {
         let mut tera = Tera::default();
+        let mut templates = Vec::new();
         for item in Templates::keys() {
             println!("loading item {}", &item);
             let asset = Templates::get(item).unwrap();
             let template = String::from_utf8(asset).unwrap();
-            tera.add_raw_template(item, template.as_ref()).unwrap();
+            templates.push((item.to_owned(), template));
         }
+        tera.add_raw_templates(
+            templates
+                .iter()
+                .map(|(a, b)| (a.as_ref(), b.as_ref()))
+                .collect::<Vec<_>>(),
+        ).unwrap();
 
         tera.register_filter("humanize_time", |v, _| {
             Ok(<i64>::humanize(&v.as_i64().unwrap()).into())

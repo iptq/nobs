@@ -1,14 +1,12 @@
-use std::sync::Arc;
-
 use futures::{future, Future};
 use hyper::{service::Service, Body, Request, Response};
 
 use super::{HostIndex, Static};
-use app::State;
 use error::{Compat, Error};
+use State;
 
 pub struct Parser {
-    state: Arc<State>,
+    state: State,
 }
 
 impl Service for Parser {
@@ -24,7 +22,7 @@ impl Service for Parser {
         };
         if path == "/" {
             return Box::new(
-                HostIndex::new(self.state.clone())
+                HostIndex::new(&self.state)
                     .call(req)
                     .or_else(|err| Box::new(future::ok(err.into()))),
             );
@@ -41,7 +39,9 @@ impl Service for Parser {
 }
 
 impl Parser {
-    pub fn new(state: Arc<State>) -> Self {
-        Parser { state }
+    pub fn new(state: &State) -> Self {
+        Parser {
+            state: state.clone(),
+        }
     }
 }

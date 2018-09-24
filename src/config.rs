@@ -1,37 +1,44 @@
-use _config;
-use failure::Error;
-
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct Config {
-    pub addr: String,
-    pub clone_url: String,
-    pub title: String,
-    pub toplevel: String,
-    pub recursive: bool,
-    pub sources: Vec<String>,
+    #[serde(default = "Config::default_addr")]
+    addr: String,
+    #[serde(default)]
+    base_url: Option<String>,
+    #[serde(default = "Config::default_title")]
+    title: String,
+    #[serde(default)]
+    sources: Vec<String>,
+    #[serde(default)]
+    ignores: Vec<String>,
 }
 
 impl Config {
-    pub fn from_cfg(cfg: &_config::Config) -> Result<Self, Error> {
-        let addr = cfg.get_str("addr")?;
-        let clone_url = cfg.get_str("clone_url")?;
-        let title = cfg.get_str("title")?;
-        let toplevel = cfg.get_str("toplevel")?;
-        let recursive = cfg.get_bool("recursive")?;
-        let sources = cfg.get_array("sources")?.iter().try_fold(
-            Vec::new(),
-            |mut it, value| -> Result<_, Error> {
-                it.push(value.clone().into_str()?);
-                Ok(it)
-            },
-        )?;
-        Ok(Config {
-            addr,
-            clone_url,
-            title,
-            toplevel,
-            recursive,
-            sources,
-        })
+    pub fn get_addr(&self) -> &str {
+        &self.addr
+    }
+    pub fn get_title(&self) -> &str {
+        &self.title
+    }
+    pub fn get_sources(&self) -> ::std::slice::Iter<String> {
+        self.sources.iter()
+    }
+
+    pub fn default_addr() -> String {
+        "127.0.0.1:7700".to_owned()
+    }
+    pub fn default_title() -> String {
+        "NOBS Static Git Viewer".to_owned()
+    }
+}
+
+impl Default for Config {
+    fn default() -> Self {
+        Config {
+            addr: "127.0.0.1:7700".to_string(),
+            base_url: None,
+            title: "NOBS Static Git Viewer".to_string(),
+            sources: Vec::new(),
+            ignores: Vec::new(),
+        }
     }
 }

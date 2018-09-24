@@ -1,13 +1,12 @@
-use std::sync::Arc;
-
 use futures::{future, Future};
 use hyper::{service::Service, Body, Request, Response, StatusCode};
 
-use app::State;
 use error::{Compat, Error};
+use State;
+use TemplateEngine;
 
 pub struct HostIndex {
-    state: Arc<State>,
+    state: State,
 }
 
 impl Service for HostIndex {
@@ -17,19 +16,18 @@ impl Service for HostIndex {
     type Future = Box<Future<Item = Response<Self::ResBody>, Error = Self::Error> + Send>;
 
     fn call(&mut self, req: Request<Self::ReqBody>) -> Self::Future {
-        let repositories = match self.state.repositories.lock() {
-            Ok(repositories) => repositories
-                .values()
-                .map(|value| value.clone())
-                .collect::<Vec<_>>(),
-            _ => return Box::new(future::err(Error::PathMissing.into())),
-        };
+        let repositories = self
+            .state
+            .get_repositories()
+            .values()
+            .map(|value| value.clone())
+            .collect::<Vec<_>>();
 
         let mut ctx = self.state.generate_context(&req);
         ctx.add("title", "Index");
         ctx.add("repositories", &repositories);
 
-        let body = match self.state.templates.render("host_index.html", &ctx) {
+        let body = match self.state.render("host_index.html", &ctx) {
             Ok(text) => Body::from(text),
             Err(err) => {
                 return Box::new(future::err(
@@ -50,7 +48,9 @@ impl Service for HostIndex {
 }
 
 impl HostIndex {
-    pub fn new(state: Arc<State>) -> Self {
-        HostIndex { state }
+    pub fn new(state: &State) -> Self {
+        HostIndex {
+            state: state.clone(),
+        }
     }
 }

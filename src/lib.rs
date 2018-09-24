@@ -1,4 +1,3 @@
-extern crate config as _config;
 #[macro_use]
 extern crate embed;
 #[macro_use]
@@ -11,6 +10,8 @@ extern crate hyper;
 extern crate mime_guess;
 extern crate serde;
 #[macro_use]
+extern crate serde_derive;
+#[macro_use]
 extern crate serde_json;
 extern crate tera;
 extern crate walkdir;
@@ -20,8 +21,12 @@ mod config;
 mod error;
 mod repo;
 mod services;
+mod state;
+mod templates;
 
 pub use app::Nobs;
 pub use config::Config;
 pub use humanize::*;
 pub use repo::*;
+pub use state::State;
+pub use templates::TemplateEngine;

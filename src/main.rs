@@ -1,19 +1,20 @@
-extern crate config;
 extern crate failure;
 extern crate nobs;
+extern crate toml;
+
+use std::fs::File;
+use std::io::Read;
 
 use failure::Error;
 use nobs::{Config, Nobs};
 
 fn main() -> Result<(), Error> {
-    let mut cfg = config::Config::default();
-    cfg.set_default("addr", "127.0.0.1:7700")?;
-    cfg.set_default("title", "No-BS Git Viewer")?;
-    cfg.set_default("toplevel", "nobs")?;
-    cfg.merge(config::File::with_name("nobs"))?;
+    let mut file = File::open("nobs.toml")?;
+    let mut contents = String::new();
+    file.read_to_string(&mut contents)?;
 
-    let appcfg = Config::from_cfg(&cfg)?;
-    let app = Nobs::from(&appcfg)?;
+    let config = toml::from_str::<Config>(&contents)?;
+    let app = Nobs::from(&config)?;
 
     app.run();
     Ok(())
